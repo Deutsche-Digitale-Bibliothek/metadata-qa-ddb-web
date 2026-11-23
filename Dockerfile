@@ -4,7 +4,7 @@ LABEL maintainer="Péter Király <pkiraly@gwdg.de>"
 LABEL description="A web interface of quality assessment tool for Deutsche Digitale Bibliothek metadata."
 # the Github repo labels
 LABEL org.opencontainers.image.description="A web interface of quality assessment tool for Deutsche Digitale Bibliothek metadata."
-LABEL org.opencontainers.image.source=https://github.com/pkiraly/metadata-qa-ddb-web
+LABEL org.opencontainers.image.source=https://github.com/Deutsche-Digitale-Bibliothek/metadata-qa-ddb-web
 LABEL org.opencontainers.image.licenses="GNU General Public License v3.0"
 
 # Patch drift is intentional; API-breaking majors stay opt-in.
