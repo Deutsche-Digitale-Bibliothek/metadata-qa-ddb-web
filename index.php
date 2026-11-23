@@ -1,7 +1,6 @@
 <?php
 
 // use Configuration;
-
 include_once 'common-functions.php';
 
 try {

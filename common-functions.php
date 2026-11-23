@@ -25,19 +25,14 @@ function getPostedOrDefault($key, $default_value = NULL, $allowed_values = []) {
 }
 
 function createSmarty($templateDir) {
-  // define('APPLICATION', 'szte');
-  // define('APPLICATION_DIR', $_SERVER['DOCUMENT_ROOT'] . '/' . APPLICATION);
-  define('APPLICATION_DIR', __DIR__);
-  // Stable path: dependency bumps must not become loader bugs.
-  define('SMARTY_DIR', APPLICATION_DIR . '/libs/smarty/libs/');
-  define('_SMARTY', APPLICATION_DIR . '/libs/_smarty/');
-  require_once(SMARTY_DIR . 'Smarty.class.php');
+  define('_SMARTY', __DIR__ . '/libs/_smarty/');
+
   $smarty = new Smarty();
   $smarty->setTemplateDir(getcwd() . '/' . $templateDir);
   $smarty->setCompileDir(_SMARTY . '/templates_c/');
   $smarty->setConfigDir(_SMARTY . '/configs/');
   $smarty->setCacheDir(_SMARTY . '/cache/');
-  $smarty->addPluginsDir(APPLICATION_DIR . '/common/smarty_plugins/');
+
   // standard PHP function
   $smarty->registerPlugin("modifier", "str_replace", "str_replace");
   $smarty->registerPlugin("modifier", "number_format", "number_format");
