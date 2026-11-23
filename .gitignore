@@ -1,5 +1,12 @@
 configuration.cnf
-.idea
+logs/
+
+# composer provided dependencies
+vendor/
+
 # Downloaded runtime code stays out of Git.
 libs/smarty/
 libs/_smarty/templates_c/
+
+# editor related files
+.idea
