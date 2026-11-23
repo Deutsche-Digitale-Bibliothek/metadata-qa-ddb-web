@@ -17,11 +17,9 @@ env:
   # Cron lives on main; the maintained image lives on v2.0.
   IMAGE_BRANCH: ${{ github.event_name == 'schedule' && 'v2.0' || github.ref_name }}
 
-# There is a single job in this workflow. It's configured to run on the latest available version
-# of Ubuntu.
 jobs:
   build-and-push-image:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     # Sets the permissions granted to the `GITHUB_TOKEN` for the actions in this job.
     permissions:
       contents: read
@@ -55,8 +53,9 @@ jobs:
           # Cron's event SHA is main; label the commit we actually checked out.
           context: git
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          # Refresh the branch tag on cron too; "nightly" would leave users behind.
-          tags: type=raw,value=${{ env.IMAGE_BRANCH }}
+          tags: |
+            type=raw,value=${{ env.IMAGE_BRANCH }}
+            type=raw,value=tagged,enable=${{ env.IMAGE_BRANCH == 'v2.0' }}
 
       # This step uses the `docker/build-push-action` action to build the image, based on your repository's
       # `Dockerfile`.
