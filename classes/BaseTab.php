@@ -244,8 +244,6 @@ abstract class BaseTab implements Tab {
   */
 
   protected function createPdf($html) {
-    require_once 'libs/dompdf/autoload.inc.php';
-
     $applocationDir = dirname($_SERVER['SCRIPT_FILENAME']);
     $dompdf = new Dompdf\Dompdf();
     $dompdf->getOptions()->setDefaultFont('helvetica');

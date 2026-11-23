@@ -1,7 +1,5 @@
 <?php
 
-require_once 'libs/dompdf/autoload.inc.php';
-
 use Dompdf\Dompdf;
 
 class Overview extends BaseTab {
