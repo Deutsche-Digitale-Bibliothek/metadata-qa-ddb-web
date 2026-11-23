@@ -257,8 +257,12 @@ class Fair extends BaseTab {
       ]
     ];
     $smarty->assign('categories', $categories);
+    $this->log->warning('Q-1.1 frequency: score: ' . json_encode($frequency['Q-1.1:score']));
+    $this->log->warning('Q-1.1 frequency: status: ' . json_encode($frequency['Q-1.1:status']));
     $values = $this->createCriteria($frequency, $categories);
-    $smarty->assign('values', $this->createCriteria($frequency, $categories));
+    $this->log->warning('## values: ' . json_encode(array_keys($values)));
+    $this->log->warning('## values: ' . json_encode($values));
+    $smarty->assign('values', $values);
     $smarty->assign('categoryCount', $this->calculateCategoryCount($categories, $values));
 
     $blocked = [];
@@ -296,7 +300,7 @@ class Fair extends BaseTab {
         }
         list($label, $color) = $this->getLabel($total, $definition['ranges']);
       }
-      error_log($category . ': ' . $total . ' - ' . $label);
+      $this->log->warning($category . ': ' . $total . ' - ' . $label);
       $fair[$category] = [
         'total' => $total,
         'label' => $label,
@@ -381,9 +385,11 @@ class Fair extends BaseTab {
     }
 
     foreach ($criteria as $id => $item) {
-      $category = $index[$id];
-      $criteria_definition = $categories[$category]['criteria'][$id];
-      $criteria[$id] = new Criterium($id, $category, $criteria_definition, $item['status'], $item['score']);
+      if (isset($index[$id])) {
+        $category = $index[$id];
+        $criteria_definition = $categories[$category]['criteria'][$id];
+        $criteria[$id] = new Criterium($id, $category, $criteria_definition, $item['status'], $item['score']);
+      }
     }
 
     return $criteria;

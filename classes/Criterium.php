@@ -9,24 +9,36 @@ Class Criterium {
   private $score;
   private $distribution = [];
   private $mean;
+  private $isBlocker = false;
   private $isBlocked = false;
+  private $log;
 
   /**
    * @param $status
    * @param $score
    */
   public function __construct($id, $category, $definition, $status, $score) {
+    global $configuration;
     $this->id = $id;
     $this->category = $category;
     $this->definition = $definition;
     $this->status = $status;
     $this->score = $score;
+  
+    $this->log = $configuration->createLogger(get_class($this));
+  
+    $this->calculateIsBlocker();
     $this->calculateStatus();
     $this->calculateScore();
+
+  }
+
+  private function calculateIsBlocker() {
+    $this->isBlocker = isset($this->definition['blocker']) && $this->definition['blocker'] == true;
   }
 
   private function calculateStatus() {
-    if (isset($this->definition['blocker']) && $this->definition['blocker'] == true) {
+    if ($this->isBlocker) {
       foreach ($this->status as $record) {
         if ($record['value'] == '0') {
           $this->isBlocked = true;
@@ -55,14 +67,20 @@ Class Criterium {
 
   public function tooltip($color, $total) {
     if ($this->has($color)) {
+      // TODO: count is wrong here!
       $count = $this->distribution[$color];
-      return sprintf("%.4f%%, %d records", $count * 100 / $total, $count);
+      $tooltip = sprintf("%.4f%%, %d records", $count * 100 / $total, $count);
+      if ($this->id == 'Q-1.1')
+        $this->log->warning("tooltip: $tooltip, total: $total, count: $count");
+      return $tooltip;
     }
     return "";
   }
 
   public function percent($color, $total) {
     if ($this->has($color)) {
+      if ($this->id == 'Q-1.1')
+        $this->log->warning($this->id . ") distribution[$color]: " . $this->distribution[$color], ['id' => $this->id]);
       return sprintf("%.0f%%", $this->distribution[$color] * 100 / $total);
     }
     return "";
@@ -71,16 +89,14 @@ Class Criterium {
   /**
    * @return mixed
    */
-  public function getMean()
-  {
+  public function getMean() {
     return $this->mean;
   }
 
   /**
    * @return bool
    */
-  public function isBlocked(): bool
-  {
+  public function isBlocked(): bool {
     return $this->isBlocked;
   }
 
@@ -98,9 +114,14 @@ Class Criterium {
   private function calculateScore() {
     $count = 0;
     $total = 0;
+    $debug = $this->id == 'Q-1.1';
+    if ($debug)
+      $this->log->warning(__LINE__ . " distribution BEFORE: ", [$this->distribution]);
+
     foreach ($this->score as $record) {
-      if (!is_null($record['value']) && $record['value'] != 'NA') {
-        $count += $record['frequency'];
+      $count += $record['frequency'];
+      // $total += $record['frequency'];
+      if (!is_null($record['value']) && $record['value'] != 'NA') {        
         $total += ($record['frequency'] * $record['value']);
         list($label, $color) = $this->getLabel((float)$record['value']);
         if ($color != '') {
@@ -110,12 +131,20 @@ Class Criterium {
         }
       }
     }
+    if ($debug) {
+      $this->log->warning(__LINE__ . " total: $total, count: $count");
+      $this->log->warning(__LINE__ . " distribution IN BETWEEN: ", [$this->distribution]);
+    }
+
     if ($this->isBlocked() && isset($this->distribution['orange'])) {
       $this->distribution['orange'] -= $this->distribution['blocked'];
       if ($this->distribution['orange'] == 0) {
         unset($this->distribution['orange']);
       }
     }
+    if ($debug)
+      $this->log->warning(__LINE__ . " distribution AFTER: ", [$this->distribution]);
+
     $this->mean = ($count > 0) ? sprintf("%.2f", ($total / $count)) : '&mdash;';
   }
 
@@ -162,4 +191,16 @@ Class Criterium {
     return [$label, $color];
   }
 
+  public function __toString() : string {
+    return json_encode([
+      'id' => $this->id,
+      'category' =>  $this->category,
+      'definition' =>  $this->definition,
+      'status' =>  $this->status,
+      'score' =>  $this->score,
+      'distribution' =>  $this->distribution,
+      'mean' =>  $this->mean,
+      'isBlocked' =>  $this->isBlocked,
+    ]);
+  }
 }

@@ -5,6 +5,8 @@ include_once 'classes/IssuesDBMySQL.php';
 
 # use Dompdf\Dompdf;
 
+use Monolog\Logger;
+
 abstract class BaseTab implements Tab {
 
   protected $configuration;
@@ -21,25 +23,29 @@ abstract class BaseTab implements Tab {
   protected $file;
   protected $count;
   protected $parameters = [];
+  protected Logger $log;
 
-  public function __construct() {
-    $this->configuration = $this->getConfiguration();
+  public function __construct(Configuration $configuration) {
+    $this->configuration = $configuration; // $this->getConfiguration();
 
-    $this->inputDir = $this->configuration['INPUT_DIR'];
-    $this->outputDir = $this->configuration['OUTPUT_DIR'];
+    $this->inputDir = $configuration->get('INPUT_DIR');
+    $this->outputDir = $configuration->get('OUTPUT_DIR');
     $this->subdirs = array_values(array_diff(scandir($this->outputDir), ['.', '..']));
     $this->subdir = getOrDefault('subdir', 'DC-DDB-WuerzburgIMG', $this->subdirs);
     $this->lang = getOrDefault('lang', 'de', ['en', 'de']);
     $this->parameters['lang'] = $this->lang;
-    if (isset($this->configuration['MQAF_DB_USER'])) {
+    $this->log = $configuration->createLogger(get_class($this));
+    if ($configuration->has('MQAF_DB_USER')) {
       $this->db = new IssuesDBMySQL(
-        $this->configuration['MQAF_DB_USER'], $this->configuration['MQAF_DB_PASSWORD'],
-        $this->configuration['MQAF_DB_DATABASE'],
-        $this->configuration['MQAF_DB_HOST'], $this->configuration['MQAF_DB_PORT']
+        $configuration->get('MQAF_DB_USER'), $configuration->get('MQAF_DB_PASSWORD'),
+        $configuration->get('MQAF_DB_DATABASE'),
+        $configuration->get('MQAF_DB_HOST'), $configuration->get('MQAF_DB_PORT'),
+        $this->log
       );
     } else {
       $this->db = new IssuesDB($this->outputDir);
     }
+    $this->log->warning("hello world");
   }
 
   public function prepareData(Smarty &$smarty) {
@@ -222,6 +228,7 @@ abstract class BaseTab implements Tab {
    * Reads configuration file and override the keys with environmental variables
    * @return object|array
    */
+  /*
   private function getConfiguration(): array {
     $configuration = parse_ini_file("configuration.cnf", false, INI_SCANNER_TYPED);
     $variables = ['INPUT_DIR', 'OUTPUT_DIR', 'MQAF_DB_HOST', 'MQAF_DB_PORT', 'MQAF_DB_DATABASE',
@@ -234,6 +241,7 @@ abstract class BaseTab implements Tab {
     }
     return $configuration;
   }
+  */
 
   protected function createPdf($html) {
     require_once 'libs/dompdf/autoload.inc.php';

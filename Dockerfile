@@ -13,8 +13,8 @@ ARG DOMPDF_MAJOR=3
 
 # Patch installed OS packages too; apt-get install alone leaves old baggage.
 RUN apt-get update \
- && apt-get upgrade -y \
- && apt-get install -y --no-install-recommends \
+  && apt-get upgrade -y \
+  && apt-get install -y --no-install-recommends \
       # install basic OS tools
       apt-utils \
       unzip \
@@ -33,44 +33,52 @@ RUN apt-get update \
      && docker-php-ext-install gettext zip intl \
      && docker-php-ext-install pdo pdo_mysql \
      && docker-php-ext-enable yaml intl \
- && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/*
+
+# install composer from its official Docker image
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 COPY . /var/www/html/
 WORKDIR /var/www/html
 
+# install composer from its official Docker image
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+RUN  composer install --prefer-dist --no-dev \
+  && composer clear-cache
+
 RUN \
- #
- # set configuration
- #
- mv configuration.cnf.template configuration.cnf \
- && sed -i.bak 's,<path to input directory>,/opt/metadata-qa-ddb/input,' configuration.cnf \
- && sed -i.bak 's,<path to output directory>,/opt/metadata-qa-ddb/output,' configuration.cnf \
- && sed -i.bak 's,<MySQL database host>,mqaf-ddb-db,' configuration.cnf \
- && sed -i.bak 's,<MySQL database name>,ddb,' configuration.cnf \
- && sed -i.bak 's,<MySQL user name>,ddb,' configuration.cnf \
- && sed -i.bak 's,<MySQL password>,ddb,' configuration.cnf \
- #
- # Stable tags only; numeric SemVer keeps .10 ahead of .9.
- #
- && cd libs/ \
- && curl -fsSL https://repo.packagist.org/p2/smarty/smarty.json --output /tmp/smarty.json \
- && SMARTY_VERSION="$(jq -er --arg major "$SMARTY_MAJOR" '.packages["smarty/smarty"] | map(.version | ltrimstr("v") | select(startswith($major + ".") and test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))) | max_by(split(".") | map(tonumber))' /tmp/smarty.json)" \
- && curl -fsSL https://github.com/smarty-php/smarty/archive/v${SMARTY_VERSION}.zip --output v$SMARTY_VERSION.zip \
- && unzip -oq v${SMARTY_VERSION}.zip \
+  #
+  # set configuration
+  #
+  mv configuration.cnf.template configuration.cnf \
+  && sed -i.bak 's,<path to input directory>,/opt/metadata-qa-ddb/input,' configuration.cnf \
+  && sed -i.bak 's,<path to output directory>,/opt/metadata-qa-ddb/output,' configuration.cnf \
+  && sed -i.bak 's,<MySQL database host>,mqaf-ddb-db,' configuration.cnf \
+  && sed -i.bak 's,<MySQL database name>,ddb,' configuration.cnf \
+  && sed -i.bak 's,<MySQL user name>,ddb,' configuration.cnf \
+  && sed -i.bak 's,<MySQL password>,ddb,' configuration.cnf \
+  #
+  # Stable tags only; numeric SemVer keeps .10 ahead of .9.
+  #
+#  && cd libs/ \
+#  && curl -fsSL https://repo.packagist.org/p2/smarty/smarty.json --output /tmp/smarty.json \
+#  && SMARTY_VERSION="$(jq -er --arg major "$SMARTY_MAJOR" '.packages["smarty/smarty"] | map(.version | ltrimstr("v") | select(startswith($major + ".") and test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))) | max_by(split(".") | map(tonumber))' /tmp/smarty.json)" \
+#  && curl -fsSL https://github.com/smarty-php/smarty/archive/v${SMARTY_VERSION}.zip --output v$SMARTY_VERSION.zip \
+#  && unzip -oq v${SMARTY_VERSION}.zip \
  # Keep the loader path stable while releases move on.
- && mv smarty-${SMARTY_VERSION} smarty \
- && rm v${SMARTY_VERSION}.zip /tmp/smarty.json \
- && mkdir -p _smarty/templates_c \
- && chmod a+w -R _smarty/templates_c/ \
+#  && mv smarty-${SMARTY_VERSION} smarty \
+#  && rm v${SMARTY_VERSION}.zip /tmp/smarty.json \
+#  && mkdir -p _smarty/templates_c \
+#  && chmod a+w -R _smarty/templates_c/ \
  #
  # Use Dompdf's bundled release ZIP, including its dependency tree.
  #
- && curl -fsSL https://repo.packagist.org/p2/dompdf/dompdf.json --output /tmp/dompdf.json \
- && DOMPDF_VERSION="$(jq -er --arg major "$DOMPDF_MAJOR" '.packages["dompdf/dompdf"] | map(.version | ltrimstr("v") | select(startswith($major + ".") and test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))) | max_by(split(".") | map(tonumber))' /tmp/dompdf.json)" \
- && curl -fsSL https://github.com/dompdf/dompdf/releases/download/v${DOMPDF_VERSION}/dompdf-${DOMPDF_VERSION}.zip \
-    --output dompdf-${DOMPDF_VERSION}.zip \
- && unzip -oq dompdf-${DOMPDF_VERSION}.zip \
- && rm dompdf-${DOMPDF_VERSION}.zip /tmp/dompdf.json \
+#  && curl -fsSL https://repo.packagist.org/p2/dompdf/dompdf.json --output /tmp/dompdf.json \
+#  && DOMPDF_VERSION="$(jq -er --arg major "$DOMPDF_MAJOR" '.packages["dompdf/dompdf"] | map(.version | ltrimstr("v") | select(startswith($major + ".") and test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))) | max_by(split(".") | map(tonumber))' /tmp/dompdf.json)" \
+#  && curl -fsSL https://github.com/dompdf/dompdf/releases/download/v${DOMPDF_VERSION}/dompdf-${DOMPDF_VERSION}.zip \
+#     --output dompdf-${DOMPDF_VERSION}.zip \
+#  && unzip -oq dompdf-${DOMPDF_VERSION}.zip \
+#  && rm dompdf-${DOMPDF_VERSION}.zip /tmp/dompdf.json \
  #
  # set apache
  #

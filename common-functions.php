@@ -45,9 +45,9 @@ function createSmarty($templateDir) {
   return $smarty;
 }
 
-function createTab($name): Tab {
+function createTab($name, Configuration $configuration): Tab {
   include_once('classes/' . $name . '.php');
-  return new $name();
+  return new $name($configuration);
 }
 
 function readCsv($csvFile, $id = '', $collect = FALSE) {
