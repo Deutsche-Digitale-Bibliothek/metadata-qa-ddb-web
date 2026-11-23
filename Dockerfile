@@ -44,7 +44,10 @@ WORKDIR /var/www/html
 # install composer from its official Docker image
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 RUN  composer install --prefer-dist --no-dev \
-  && composer clear-cache
+  && composer clear-cache \
+  && mkdir -p logs libs/_smarty/templates_c libs/_smarty/configs libs/_smarty/cache \
+  && chown www-data logs libs/_smarty/templates_c \
+  && chmod g+w logs libs/_smarty/templates_c libs/_smarty/cache
 
 RUN \
   #
